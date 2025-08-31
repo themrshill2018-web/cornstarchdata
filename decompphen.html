@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>🌱 Bioplastics vs. Plastic Spoon — Decomposition (Industrial Compost)</title>
+<style>
+  :root {
+    --bg:#f6f7f9; --card:#fff; --ink:#1f2937; --muted:#6b7280;
+    --bio:#16a34a; --plastic:#374151;
+  }
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--ink);line-height:1.45}
+  .wrap{max-width:980px;margin:28px auto;padding:0 16px 32px}
+  h1{margin:0 0 6px;font-size:clamp(22px,3.6vw,30px)}
+  p.lede{margin:0 0 14px;color:var(--muted)}
+  .card{background:var(--card);border:1px solid #eef1f4;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+  .head{padding:14px 16px 0}.sub{padding:0 16px 8px;color:var(--muted);font-size:14px}
+  .body{padding:12px 16px 16px}
+  .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  label{font-size:13px;color:var(--muted)}
+  select,input[type=range]{font:inherit;border:1px solid #e5e7eb;border-radius:10px;padding:8px 10px;background:#fff;color:var(--ink)}
+  input[type=range]{width:260px}
+  .btn{appearance:none;border:1px solid #e6e8eb;background:#fff;color:var(--ink);border-radius:999px;padding:8px 12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .btn:hover{background:#fafafa}
+  .btn.primary{background:#16a34a;border-color:#16a34a;color:#fff}
+  .btn.primary:hover{filter:brightness(.98)}
+  .chart-wrap{width:100%;height:340px;position:relative}
+  svg{width:100%;height:100%;display:block}
+  .legend{display:flex;gap:16px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:8px}
+  .key{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:22px;height:6px;border-radius:999px;display:inline-block}
+  .sw-bio{background:var(--bio)} .dash{border-bottom:3px dashed var(--plastic);width:22px;height:0;display:inline-block}
+  .evidence{font-size:14px;background:#f9fafb;border:1px solid #edf1f3;padding:10px 12px;border-radius:12px}
+  .table-wrap{max-height:240px;overflow:auto;border:1px solid #edf1f3;border-radius:12px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  thead{position:sticky;top:0;background:#f3f4f6;z-index:1}
+  th,td{padding:8px 10px;border-bottom:1px solid #f1f2f4;text-align:left}
+  tbody tr:nth-child(even){background:#fafafa}
+  details{background:#fff;border:1px solid #edf1f3;border-radius:12px;padding:10px 12px}
+  summary{cursor:pointer;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🌱 Bioplastics vs. Plastic Spoon — Decomposition (Industrial Compost)</h1>
+  <p class="lede">Focus: comparative **% mass remaining** over time. Calibrated for <strong>industrial compost conditions (≈55–60 °C, high humidity)</strong>.</p>
+
+  <div class="card">
+    <div class="head"><h2 style="margin:0;font-size:18px">⚗️ Decomposition Explorer</h2></div>
+    <div class="sub">Use <em>Play</em> to animate days, or scrub the slider. Download the dataset as CSV.</div>
+    <div class="body">
+      <div class="row" style="margin-bottom:8px">
+        <label for="maxDays">Total Days</label>
+        <input type="range" id="maxDays" min="60" max="365" step="5" value="180" />
+        <output id="maxDaysOut">180</output>
+
+        <label for="day">Current Day</label>
+        <input type="range" id="day" min="0" max="180" step="1" value="0" />
+        <output id="dayOut">0</output>
+      </div>
+
+      <div class="row" style="margin-bottom:10px">
+        <button class="btn primary" id="play">▶ Play</button>
+        <button class="btn" id="pause">⏸ Pause</button>
+        <button class="btn" id="reset">🔄 Reset</button>
+        <button class="btn" id="step">➕ Step +5</button>
+        <button class="btn" id="download">⬇ Download CSV</button>
+      </div>
+
+      <div class="chart-wrap">
+        <svg id="chart" role="img" aria-label="Line chart showing percent mass remaining for bioplastic and plastic over days"></svg>
+      </div>
+      <div class="legend">
+        <span class="key"><span class="sw sw-bio"></span> Bioplastic/Cornstarch Spoon (industrial compost)</span>
+        <span class="key"><span class="dash"></span> Traditional Plastic Spoon</span>
+      </div>
+      <div id="evidence" class="evidence" style="margin-top:10px"><strong>Evidence snapshot</strong> — Day <strong>0</strong>: Bioplastic <strong>100%</strong>, Plastic <strong>100%</strong>.</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="head"><h2 style="margin:0;font-size:18px">Data Table</h2></div>
+    <div class="body">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Day</th><th>Bioplastic % Remaining</th><th>Plastic % Remaining</th></tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <details style="margin-top:14px">
+    <summary>Model & Sources (click to expand)</summary>
+    <p style="color:var(--muted);font-size:14px">
+      • The bioplastic curve is modeled as exponential decay with parameters chosen so that ≈<strong>98 % mass loss by ~120 days</strong>
+      (industrial compost) and ≥<strong>90 % biodegradation by 180 days</strong>, aligning with published results and the ASTM D6400 compostability criterion for industrial composting.
+    </p>
+    <ul style="font-size:14px;line-height:1.4">
+      <li>Compostable plastics showing ~<strong>98 wt% mass loss after ~4 months</strong> in industrial compost. Source: peer-reviewed study. <a href="https://www.sciencedirect.com/science/article/pii/S0960852424003730" target="_blank" rel="noopener">Biochemical Engineering Journal (2024)</a>.</li>
+      <li><strong>ASTM D6400</strong>: ≥<strong>90 % biodegradation within 180 days</strong> under controlled composting. <a href="https://measurlabs.com/blog/biodegradability-compostability-standard-testing/" target="_blank" rel="noopener">Measurlabs explainer</a>, <a href="https://ellspoeco.com/what-is-astm-d6400-understanding-compostable-standards/" target="_blank" rel="noopener">ASTM D6400 overview</a>.</li>
+      <li>Conventional plastics (e.g., polypropylene spoons) persist for decades+ with negligible biodegradation in short time windows; evidence of minimal change even after 5 years in landfill exposure. <a href="https://pubmed.ncbi.nlm.nih.gov/33293087/" target="_blank" rel="noopener">Potrykus et al., 2021</a>; general timeframes (20–500 yrs) summarized <a href="https://www.greenmatch.co.uk/polypropylene-environmental-impact" target="_blank" rel="noopener">here</a>.</li>
+    </ul>
+    <p style="color:var(--muted);font-size:13px">Note: This is an instructional model for PD. Replace with your district’s own measurements when available.</p>
+  </details>
+</div>
+
+<script>
+(function(){
+  // ---- Model parameters ----
+  // Industrial compost calibration:
+  // Exponential decay: M(t) = 100*exp(-k*t)
+  // Choose k so M(120 days) ≈ 2% (≈98% mass loss), consistent with a 4-month study in industrial compost.
+  const K_BIO = Math.log(50) / 120;            // k ≈ 0.0326 day^-1
+  const BIO = (t) => 100 * Math.exp(-K_BIO*t); // % remaining
+  // Traditional plastic: essentially flat over this time window (industrial compost does not meaningfully biodegrade it).
+  const PLASTIC = (_t) => 100;
+
+  // ---- State ----
+  const state = { maxDays: 180, day: 0, playing: false, timer: null };
+
+  // ---- DOM ----
+  const maxDaysInput = document.getElementById('maxDays');
+  const maxDaysOut   = document.getElementById('maxDaysOut');
+  const dayInput     = document.getElementById('day');
+  const dayOut       = document.getElementById('dayOut');
+  const playBtn      = document.getElementById('play');
+  const pauseBtn     = document.getElementById('pause');
+  const resetBtn     = document.getElementById('reset');
+  const stepBtn      = document.getElementById('step');
+  const dlBtn        = document.getElementById('download');
+  const svg          = document.getElementById('chart');
+  const tableBody    = document.getElementById('tableBody');
+  const evidenceEl   = document.getElementById('evidence');
+
+  // ---- Data ----
+  function generateSeries(maxDays){
+    const rows = [];
+    for (let d=0; d<=maxDays; d++){
+      rows.push({
+        day: d,
+        bio: +(BIO(d)).toFixed(1),
+        plastic: +(PLASTIC(d)).toFixed(1)
+      });
+    }
+    return rows;
+  }
+  let series = generateSeries(state.maxDays);
+
+  // ---- Chart (pure SVG) ----
+  function scale(v,d0,d1,r0,r1){ const t=(v-d0)/(d1-d0||1); return r0+t*(r1-r0); }
+  function draw(){
+    const width = svg.clientWidth || 800, height = svg.clientHeight || 340;
+    const m = { l:56, r:16, t:10, b:36 }, plotW = width-m.l-m.r, plotH = height-m.t-m.b;
+    svg.setAttribute('viewBox',`0 0 ${width} ${height}`);
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    const xMin=0, xMax=Math.max(1, state.day), yMin=0, yMax=100;
+    const xS = x => m.l + scale(x,xMin,xMax,0,plotW);
+    const yS = y => m.t + scale(yMax-y,yMin,yMax,0,plotH);
+
+    // grid + ticks
+    [0,20,40,60,80,100].forEach(v=>{
+      const y=yS(v);
+      const gl=line(m.l,m.l+plotW,y,y,'#e5e7eb'); gl.setAttribute('stroke-dasharray','3 3'); svg.appendChild(gl);
+      svg.appendChild(text(m.l-8,y+4,11,'#6b7280','end',v));
+    });
+    const tickCount=Math.min(10,Math.max(3,Math.floor(plotW/80)));
+    const step=Math.max(1,Math.round((xMax-xMin)/tickCount));
+    for(let v=xMin; v<=xMax; v+=step){
+      const x=xS(v); svg.appendChild(line(x,x,m.t,m.t+plotH,'#f1f5f9'));
+      svg.appendChild(text(x,m.t+plotH+18,11,'#6b7280','middle',v));
+    }
+
+    // axes
+    svg.appendChild(line(m.l,m.l+plotW,m.t+plotH,m.t+plotH,'#cbd5e1'));
+    svg.appendChild(line(m.l,m.l,m.t,m.t+plotH,'#cbd5e1'));
+
+    const view = series.slice(0, state.day+1);
+    path(view,'bio','var(--bio)',2.5);
+    path(view,'plastic','var(--plastic)',2.5,'6 6');
+
+    // labels
+    svg.appendChild(text(m.l+plotW,height-6,12,'#6b7280','end','Days'));
+    svg.appendChild(text(14,m.t,12,'#6b7280','start','% Mass Remaining'));
+
+    function line(x1,x2,y1,y2,stroke){
+      const el = document.createElementNS('http://www.w3.org/2000/svg','line');
+      el.setAttribute('x1',x1); el.setAttribute('x2',x2); el.setAttribute('y1',y1); el.setAttribute('y2',y2); el.setAttribute('stroke',stroke);
+      return el;
+    }
+    function text(x,y,size,fill,anchor,content){
+      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x',x); t.setAttribute('y',y); t.setAttribute('font-size',size); t.setAttribute('fill',fill); t.setAttribute('text-anchor',anchor);
+      t.textContent=content; return t;
+    }
+    function path(data,key,stroke,width,dash){
+      const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+      let d=''; data.forEach((row,i)=>{ const x=xS(row.day), y=yS(row[key]); d+= i? ` L ${x} ${y}` : `M ${x} ${y}`; });
+      if(!d) d=`M ${xS(0)} ${yS(100)} L ${xS(0)} ${yS(100)}`;
+      p.setAttribute('d',d); p.setAttribute('fill','none'); p.setAttribute('stroke',stroke); p.setAttribute('stroke-width',width);
+      if(dash) p.setAttribute('stroke-dasharray',dash);
+      svg.appendChild(p);
+    }
+  }
+
+  // ---- Table & Evidence ----
+  function updateTable(){
+    const view = series.slice(0, state.day+1);
+    tableBody.innerHTML = view.map(r=>`<tr><td>${r.day}</td><td>${r.bio}</td><td>${r.plastic}</td></tr>`).join('');
+  }
+  function updateEvidence(){
+    const row = series[Math.min(state.day, series.length-1)];
+    evidenceEl.innerHTML = `<strong>Evidence snapshot</strong> — Day <strong>${row.day}</strong>: Bioplastic <strong>${row.bio}%</strong>, Plastic <strong>${row.plastic}%</strong>.`;
+  }
+  function refresh(rebuild=false){
+    if(rebuild){ series = generateSeries(state.maxDays); }
+    maxDaysOut.textContent = state.maxDays;
+    dayInput.max = String(state.maxDays);
+    dayInput.value = state.day;
+    dayOut.textContent = state.day;
+    draw(); updateTable(); updateEvidence();
+  }
+
+  // ---- Controls ----
+  maxDaysInput.addEventListener('input', ()=>{
+    state.maxDays = parseInt(maxDaysInput.value,10);
+    if(state.day>state.maxDays) state.day=state.maxDays;
+    refresh(true);
+  });
+  dayInput.addEventListener('input', ()=>{
+    state.day = parseInt(dayInput.value,10) || 0;
+    draw(); updateTable(); updateEvidence();
+  });
+  function stop(){ state.playing=false; clearInterval(state.timer); state.timer=null; }
+  playBtn.addEventListener('click', ()=>{
+    if(state.playing) return;
+    state.playing=true;
+    state.timer = setInterval(()=>{
+      if(state.day>=state.maxDays){ stop(); return; }
+      state.day+=1; dayInput.value=state.day; dayOut.textContent=state.day; draw(); updateTable(); updateEvidence();
+    }, 350);
+  });
+  pauseBtn.addEventListener('click', stop);
+  resetBtn.addEventListener('click', ()=>{ stop(); state.day=0; refresh(); });
+  stepBtn.addEventListener('click', ()=>{ stop(); state.day=Math.min(state.day+5,state.maxDays); refresh(); });
+
+  // ---- CSV download ----
+  dlBtn.addEventListener('click', ()=>{
+    const rows = series.map(r=>({Day:r.day, "Bioplastic % Remaining":r.bio, "Plastic % Remaining":r.plastic}));
+    const headers = Object.keys(rows[0]);
+    const csv = headers.join(',') + "\n" + rows.map(r=>headers.map(h=>r[h]).join(',')).join("\n");
+    const blob = new Blob([csv], {type:'text/csv'});
+    const url = URL.createObjectURL(blob); const a=document.createElement('a');
+    a.href=url; a.download=`bioplastics_industrial_compost_${state.maxDays}d.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  });
+
+  // ---- Init ----
+  refresh(true);
+})();
+</script>
+</body>
+</html>
